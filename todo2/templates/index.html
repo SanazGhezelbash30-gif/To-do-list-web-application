@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>lists flexible</title>
+    <style>
+        body { background: #000; color: #fff; font-family: Arial; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header button { background: #3695f4; color: white; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; margin-left: 10px; }
+        .add-list { position: fixed; top: 20px; right: 20px; background: #2196F3; color: white; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .lists-container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .list { flex: 1 1 300px; background: #111; border-radius: 15px; padding: 20px; min-height: 400px; position: relative; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .list h3 { margin: 0; }
+        .delete-list { background: #3695f4; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .note-input { width: 100%; padding: 10px; background: #222; border: 1px solid #444; border-radius: 10px; color: #fff; margin-bottom: 10px; box-sizing: border-box; }
+        .add-btn { background: #4CAF50; color: white; padding: 10px; border: none; border-radius: 10px; cursor: pointer; width: 100%; }
+        .add-btn:hover { background: #45a049; }
+        .notes { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .note { background: #333; margin: 10px 0; padding: 15px; border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border-left: 5px solid #4CAF50; cursor: pointer; }
+        .note:hover { transform: translateY(-2px); transition: 0.3s; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>welcome {{ username }}!</h1>
+    <a href="/logout"><button>exit</button></a>
+</div>
+<div class="add-list" onclick="showAddListForm()">+ new list</div>
+<div id="addListForm" style="display:none; position:fixed; top:70px; right:20px; background:#111; padding:20px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.5);">
+    <input type="text" id="newListName" placeholder="name of list">
+    <button onclick="addNewList()">add</button>
+    <button onclick="hideAddListForm()">cancel</button>
+</div>
+<div class="lists-container">
+    {% for name, notes in lists.items() %}
+    <div class="list" data-list="{{ name }}">
+        <div class="list-header">
+            <h3>{{ name }}</h3>
+            <button class="delete-list" onclick="deleteList('{{ name }}')">omit</button>
+        </div>
+        <input type="text" class="note-input" placeholder="new note..." onkeypress="if(event.key=='Enter') addNote('{{ name }}', this.value, this)">
+        <ul class="notes">
+            {% for note in notes %}
+            <li class="note">{{ note }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    function showAddListForm() { document.getElementById('addListForm').style.display = 'block'; }
+    function hideAddListForm() { document.getElementById('addListForm').style.display = 'none'; }
+    function addNewList() {
+        const name = document.getElementById('newListName').value.trim();
+        if (name) {
+            fetch('/add_list', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})})
+                .then(() => location.reload());
+        }
+    }
+    function deleteList(name) {
+        if (confirm('delete')) {
+            fetch('/delete_list', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name})})
+                .then(() => location.reload());
+        }
+    }
+    function addNote(listname, note, input) {
+        if (note.trim()) {
+            fetch('/add_note', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({listname, note:note.trim()})})
+                .then(() => location.reload());
+            input.value = '';
+        }
+    }
+</script>
+</body>
+</html>
